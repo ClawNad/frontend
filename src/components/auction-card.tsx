@@ -154,7 +154,7 @@ export function AuctionCard({
         )}
 
         {/* Endpoint buttons grid (2 cols) */}
-        {navButtons.length > 0 && (
+        {/* {navButtons.length > 0 && (
           <div className="grid grid-cols-2 gap-1.5 min-w-0">
             {navButtons.map((btn, i) => (
               <button
@@ -171,7 +171,7 @@ export function AuctionCard({
               </button>
             ))}
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Separator */}
