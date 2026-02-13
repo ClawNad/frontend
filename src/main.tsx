@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider } from 'wagmi'
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
+import { Toaster } from 'sonner'
 import { config } from './wagmi'
 import './index.css'
 import App from './App.tsx'
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider theme={darkTheme({ accentColor: '#6E54FF', accentColorForeground: 'white', borderRadius: 'none' })}>
           <App />
+          <Toaster theme="dark" position="bottom-right" richColors closeButton />
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

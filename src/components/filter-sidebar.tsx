@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, ChevronDown, Heart, X } from 'lucide-react'
+import { Search, ChevronDown, X } from 'lucide-react'
 
 export interface CategoryItem {
   id: string
@@ -8,20 +8,16 @@ export interface CategoryItem {
 }
 
 const DEFAULT_CATEGORIES: CategoryItem[] = [
-  { id: 'all', label: 'All', count: 83 },
-  { id: 'ai', label: 'AI/ML', count: 12 },
-  { id: 'dev', label: 'Developer Tools', count: 8 },
-  { id: 'defi', label: 'DeFi', count: 15 },
-  { id: 'nft', label: 'NFT', count: 6 },
-  { id: 'art', label: 'Art', count: 9 },
-  { id: 'data', label: 'Data', count: 7 },
-  { id: 'tech', label: 'Tech Trends', count: 11 },
-  { id: 'finance', label: 'Finance', count: 5 },
-  { id: 'security', label: 'Security', count: 4 },
-  { id: 'gaming', label: 'Gaming', count: 6 },
+  { id: 'launchedAt', label: 'Recently Launched', count: 0 },
+  { id: 'totalRevenue', label: 'Revenue', count: 0 },
+  { id: 'totalFeedback', label: 'Most Rated', count: 0 },
+  { id: 'agentId', label: 'Agent ID', count: 0 },
 ]
 
-const STATUS_OPTIONS = ['All Status', 'Live', 'Ended', 'Upcoming']
+const DEFAULT_STATUS_OPTIONS = [
+  { value: '', label: 'All' },
+  { value: 'active', label: 'Active' },
+]
 
 export interface FilterSidebarProps {
   categories?: CategoryItem[]
@@ -29,26 +25,26 @@ export interface FilterSidebarProps {
   onCategoryChange?: (id: string) => void
   searchPlaceholder?: string
   onSearchChange?: (value: string) => void
+  statusOptions?: { value: string; label: string }[]
   onStatusChange?: (value: string) => void
-  onFavoritesClick?: () => void
-  /** When provided, sidebar is in drawer mode; show close button and call on close */
   onClose?: () => void
 }
 
 export function FilterSidebar({
   categories = DEFAULT_CATEGORIES,
-  selectedCategoryId = 'all',
+  selectedCategoryId = 'launchedAt',
   onCategoryChange,
   searchPlaceholder = 'Search agents...',
   onSearchChange,
+  statusOptions = DEFAULT_STATUS_OPTIONS,
   onStatusChange,
-  onFavoritesClick,
   onClose,
 }: FilterSidebarProps) {
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState(STATUS_OPTIONS[0])
+  const [selectedStatus, setSelectedStatus] = useState(statusOptions[0]?.value ?? '')
   const [statusOpen, setStatusOpen] = useState(false)
-  const [favorites, setFavorites] = useState(false)
+
+  const currentStatusLabel = statusOptions.find((o) => o.value === selectedStatus)?.label ?? 'All'
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value
@@ -56,15 +52,10 @@ export function FilterSidebar({
     onSearchChange?.(v)
   }
 
-  const handleStatusSelect = (option: string) => {
-    setStatus(option)
+  const handleStatusSelect = (value: string) => {
+    setSelectedStatus(value)
     setStatusOpen(false)
-    onStatusChange?.(option)
-  }
-
-  const handleFavorites = () => {
-    setFavorites((x) => !x)
-    onFavoritesClick?.()
+    onStatusChange?.(value)
   }
 
   return (
@@ -104,48 +95,32 @@ export function FilterSidebar({
             className="w-full h-10 px-3 flex items-center justify-between bg-muted/50 border border-border text-foreground text-sm outline-none focus:border-primary transition-colors"
           >
             <span>
-              Status: <span className="font-medium">{status}</span>
+              Status: <span className="font-medium">{currentStatusLabel}</span>
             </span>
             <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${statusOpen ? 'rotate-180' : ''}`} />
           </button>
           {statusOpen && (
             <>
               <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border shadow-lg max-h-60 overflow-y-auto">
-                {STATUS_OPTIONS.map((opt) => (
+                {statusOptions.map((opt) => (
                   <button
-                    key={opt}
+                    key={opt.value}
                     type="button"
-                    onClick={() => handleStatusSelect(opt)}
+                    onClick={() => handleStatusSelect(opt.value)}
                     className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-accent transition-colors"
                   >
-                    {opt}
+                    {opt.label}
                   </button>
                 ))}
               </div>
-              <div
-                className="fixed inset-0 z-[5]"
-                aria-hidden
-                onClick={() => setStatusOpen(false)}
-              />
+              <div className="fixed inset-0 z-[5]" aria-hidden onClick={() => setStatusOpen(false)} />
             </>
           )}
         </div>
 
-        {/* Favorites */}
-        <button
-          type="button"
-          onClick={handleFavorites}
-          className={`w-full h-10 px-3 flex items-center justify-center gap-2 bg-muted/50 border text-sm outline-none focus:border-primary transition-colors ${favorites ? 'border-primary text-primary' : 'border-border text-foreground'}`}
-        >
-          <Heart className={`w-4 h-4 ${favorites ? 'fill-primary' : ''}`} />
-          Favorites
-        </button>
-
-        {/* Browse by Category */}
+        {/* Sort by */}
         <div className="pt-2">
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
-            Browse by Category
-          </h3>
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Sort By</h3>
           <div className="flex flex-wrap gap-2">
             {categories.map((cat) => {
               const isActive = selectedCategoryId === cat.id
@@ -161,13 +136,6 @@ export function FilterSidebar({
                   }`}
                 >
                   <span>{cat.label}</span>
-                  <span
-                    className={`min-w-[1.25rem] px-1.5 py-0.5 text-xs ${
-                      isActive ? 'bg-primary-foreground/20' : 'bg-muted text-muted-foreground'
-                    }`}
-                  >
-                    {cat.count}
-                  </span>
                 </button>
               )
             })}
