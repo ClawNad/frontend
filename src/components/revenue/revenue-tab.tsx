@@ -49,11 +49,19 @@ export function RevenueTab({ agentId }: RevenueTabProps) {
                         {event.eventType}
                       </span>
                     </td>
-                    <td className="py-2 px-2 text-right text-white font-mono">
-                      {formatMon(event.amount, 4)} MON
+                    <td className="py-2 px-2 text-right font-mono">
+                      <span className="text-white">{formatMon(event.amount, 4)} MON</span>
+                      {event.eventType === 'distribute' && event.agentShare && (
+                        <div className="text-[10px] text-muted-foreground mt-0.5 space-y-px">
+                          <div>Agent: {formatMon(event.agentShare, 4)}</div>
+                          {event.buybackShare && <div>Buyback: {formatMon(event.buybackShare, 4)}</div>}
+                          {event.platformFee && <div>Fee: {formatMon(event.platformFee, 4)}</div>}
+                        </div>
+                      )}
                     </td>
                     <td className="py-2 px-2 text-muted-foreground font-mono">
-                      {event.fromAddress ? truncateAddress(event.fromAddress) : '—'}
+                      {event.fromAddress ? truncateAddress(event.fromAddress) :
+                       event.toAddress ? truncateAddress(event.toAddress) : '—'}
                     </td>
                     <td className="py-2 px-2 text-right text-muted-foreground">
                       {timeAgo(event.blockTimestamp)}

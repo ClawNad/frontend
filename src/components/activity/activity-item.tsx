@@ -56,7 +56,7 @@ function getMessage(event: ActivityEvent) {
           <span className="text-muted-foreground font-mono">{truncateAddress(event.trader)}</span>
           {' '}{event.tradeType === 'buy' ? 'bought' : 'sold'}{' '}
           <span className="font-medium text-white">
-            {formatTokenAmount(event.tokenAmount)} ${event.agent.tokenSymbol}
+            {formatTokenAmount(event.tokenAmount)} ${event.agent?.tokenSymbol ?? '???'}
           </span>
           {' '}for{' '}
           <span className="text-white">{formatMon(event.monAmount)} MON</span>
@@ -64,13 +64,18 @@ function getMessage(event: ActivityEvent) {
       )
     case 'feedback': {
       const stars = scoreToStars(event.score)
+      const agentId = event.agent?.agentId
       return (
         <>
           <span className="text-muted-foreground font-mono">{truncateAddress(event.rater)}</span>
           {' '}rated{' '}
-          <Link to={`/agents/${event.agent.agentId}`} className="font-medium text-primary hover:underline">
-            Agent #{event.agent.agentId}
-          </Link>
+          {agentId ? (
+            <Link to={`/agents/${agentId}`} className="font-medium text-primary hover:underline">
+              Agent #{agentId}
+            </Link>
+          ) : (
+            <span className="font-medium text-white">an agent</span>
+          )}
           {' '}{stars.toFixed(1)}/5
           {event.tag1 && (
             <span className="text-muted-foreground"> [{event.tag1}]</span>

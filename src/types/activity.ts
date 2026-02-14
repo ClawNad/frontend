@@ -15,7 +15,7 @@ export interface ActivityTrade {
   monAmount: string
   tokenAmount: string
   trader: string
-  agent: { agentId: string; tokenSymbol: string }
+  agent?: { agentId: string; tokenSymbol: string }
   txHash?: string
 }
 
@@ -25,7 +25,7 @@ export interface ActivityFeedback {
   score: string
   tag1: string
   rater: string
-  agent: { agentId: string }
+  agent?: { agentId: string }
   txHash?: string
 }
 
