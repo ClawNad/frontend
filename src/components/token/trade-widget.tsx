@@ -90,12 +90,18 @@ export function TradeWidget({ tokenAddress, tokenSymbol, agentId }: TradeWidgetP
     setTxStep('trade')
 
     const minOut = buyQuote ? (buyQuote * 95n) / 100n : 0n // 5% slippage
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + 300) // 5 minutes
 
     writeContract({
       address: CONTRACTS.bondingCurveRouter,
       abi: bondingCurveRouterAbi,
       functionName: 'buy',
-      args: [tokenAddress as `0x${string}`, minOut, 1], // actionId MUST be 1
+      args: [{
+        amountOutMin: minOut,
+        token: tokenAddress as `0x${string}`,
+        to: userAddress,
+        deadline,
+      }],
       value: parseEther(amount),
     })
   }
@@ -105,12 +111,19 @@ export function TradeWidget({ tokenAddress, tokenSymbol, agentId }: TradeWidgetP
 
     const sellAmount = parseEther(amount)
     const minMonOut = sellQuote ? (sellQuote * 95n) / 100n : 0n // 5% slippage
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + 300) // 5 minutes
 
     writeContract({
       address: CONTRACTS.bondingCurveRouter,
       abi: bondingCurveRouterAbi,
       functionName: 'sell',
-      args: [tokenAddress as `0x${string}`, sellAmount, minMonOut, 1], // actionId MUST be 1
+      args: [{
+        amountIn: sellAmount,
+        amountOutMin: minMonOut,
+        token: tokenAddress as `0x${string}`,
+        to: userAddress,
+        deadline,
+      }],
     })
   }
 

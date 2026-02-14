@@ -1,6 +1,7 @@
 import type { AgentDetail } from '@/types/agent'
 import { useTokenPrice, useTokenTrades } from '@/hooks/use-token'
-import { formatMon } from '@/lib/format'
+
+import { PriceChart } from './price-chart'
 import { TradeWidget } from './trade-widget'
 import { TradeTable } from './trade-table'
 import { ProgressBar } from '@/components/shared/progress-bar'
@@ -12,13 +13,23 @@ interface TokenTabProps {
 
 export function TokenTab({ agent }: TokenTabProps) {
   const { data: priceData, isLoading: priceLoading } = useTokenPrice(agent.tokenAddress)
-  const { data: tradesData } = useTokenTrades(agent.tokenAddress, { limit: 20 })
+  const { data: tradesData } = useTokenTrades(agent.tokenAddress, { limit: 50 })
 
   const price = priceData?.data
   const trades = tradesData?.data ?? agent.trades ?? []
 
   return (
     <div className="space-y-6">
+      {/* MCAP Chart */}
+      {trades.length > 0 && (
+        <section>
+          <h3 className="text-xs font-bold uppercase text-primary border-b border-primary/30 pb-2 mb-3">
+            Market Cap (MON)
+          </h3>
+          <PriceChart trades={trades} />
+        </section>
+      )}
+
       {/* Token Metrics */}
       <section>
         <h3 className="text-xs font-bold uppercase text-primary border-b border-primary/30 pb-2 mb-3">
@@ -43,11 +54,11 @@ export function TokenTab({ agent }: TokenTabProps) {
               <div className="grid grid-cols-2 gap-3 text-[10px]">
                 <div className="border border-border/30 p-2">
                   <span className="text-muted-foreground">Real MON: </span>
-                  <span className="text-white font-mono">{formatMon(price.reserves.realMon, 4)}</span>
+                  <span className="text-white font-mono">{Number(price.reserves.realMon).toFixed(4)}</span>
                 </div>
                 <div className="border border-border/30 p-2">
                   <span className="text-muted-foreground">Virtual MON: </span>
-                  <span className="text-white font-mono">{formatMon(price.reserves.virtualMon, 4)}</span>
+                  <span className="text-white font-mono">{Number(price.reserves.virtualMon).toFixed(4)}</span>
                 </div>
               </div>
             )}
