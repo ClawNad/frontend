@@ -1,12 +1,16 @@
 import type { AgentDetail } from '@/types/agent'
 import { explorerUrl, truncateAddress } from '@/lib/format'
 import { CONTRACTS } from '@/lib/contracts'
+import { parseAgentURI } from '@/lib/agent-uri'
 
 interface OverviewTabProps {
   agent: AgentDetail
 }
 
 export function OverviewTab({ agent }: OverviewTabProps) {
+  const uriData = parseAgentURI(agent.agentURI || '')
+  const description = uriData.persona || uriData.description || null
+
   return (
     <div className="space-y-6">
       {/* Description */}
@@ -14,26 +18,10 @@ export function OverviewTab({ agent }: OverviewTabProps) {
         <h3 className="text-xs font-bold uppercase text-primary border-b border-primary/30 pb-2 mb-3">
           Description
         </h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {agent.agentURI ? (
-            <>Agent registered with URI: <a href={agent.agentURI} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{agent.agentURI}</a></>
-          ) : (
-            'No description available.'
-          )}
+        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+          {description || 'No description available.'}
         </p>
       </section>
-
-      {/* Endpoint */}
-      {agent.endpoint && (
-        <section>
-          <h3 className="text-xs font-bold uppercase text-primary border-b border-primary/30 pb-2 mb-3">
-            API Endpoint
-          </h3>
-          <div className="border border-border bg-muted/20 p-3">
-            <p className="text-sm font-mono text-white break-all">{agent.endpoint}</p>
-          </div>
-        </section>
-      )}
 
       {/* On-Chain Info */}
       <section>
@@ -65,6 +53,11 @@ export function OverviewTab({ agent }: OverviewTabProps) {
             href={explorerUrl('address', agent.creator)}
           />
           <InfoRow label="Block" value={agent.blockNumber} />
+          <InfoRow
+            label="ERC-8004"
+            value="View on 8004scan"
+            href={`https://www.8004scan.io/agents/monad/${agent.agentId}`}
+          />
         </div>
       </section>
     </div>

@@ -59,7 +59,7 @@ export function RatingModal({ open, onClose, agentId }: RatingModalProps) {
   function handleSubmit() {
     if (!userAddress || rating === 0 || !tag1) return
 
-    // Score: 1-5 stars → 100-500 on-chain
+    // Score: 1-5 stars → 100-500 on-chain (2 decimal precision: 100 = 1.00, 500 = 5.00)
     const score = BigInt(rating * 100)
 
     writeContract({

@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ExternalLink, Star } from 'lucide-react'
 import type { AgentDetail } from '@/types/agent'
 import { displayTokenName, truncateAddress, formatMon, timeAgo, scoreToStars, explorerUrl } from '@/lib/format'
 import { TagBadge } from '@/components/shared/tag-badge'
 import { AddressDisplay } from '@/components/shared/address-display'
+import { useTokenMetadata } from '@/hooks/use-token'
 
 interface AgentHeaderProps {
   agent: AgentDetail
@@ -14,15 +16,27 @@ export function AgentHeader({ agent }: AgentHeaderProps) {
   const symbol = agent.tokenSymbol ?? ''
   const avgScore = agent.totalFeedback > 0 ? Number(agent.totalScore) / agent.totalFeedback : 0
   const stars = scoreToStars(avgScore)
+  const { data: metaData } = useTokenMetadata(agent.tokenAddress || null)
+  const imageUri = metaData?.data?.imageUri
+  const [imgError, setImgError] = useState(false)
 
   return (
     <div className="border-b border-border bg-background">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         <div className="flex gap-4 items-start">
           {/* Avatar */}
-          <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded bg-primary/20 flex items-center justify-center text-primary font-bold text-xl uppercase">
-            {name.slice(0, 2)}
-          </div>
+          {imageUri && !imgError ? (
+            <img
+              src={imageUri}
+              alt={name}
+              className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded object-cover"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded bg-primary/20 flex items-center justify-center text-primary font-bold text-xl uppercase">
+              {name.slice(0, 2)}
+            </div>
+          )}
 
           <div className="flex-1 min-w-0 space-y-2">
             {/* Name + symbol + status */}
