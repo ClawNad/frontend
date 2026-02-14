@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Navbar } from '@/components/navbar'
 import { AgentHeader } from '@/components/agent/agent-header'
 import { OverviewTab } from '@/components/agent/overview-tab'
-import { TryAgentTab } from '@/components/agent/try-agent-tab'
+import { ChatTab } from '@/components/agent/chat-tab'
 import { TokenTab } from '@/components/token/token-tab'
 import { ReputationTab } from '@/components/reputation/reputation-tab'
 import { RevenueTab } from '@/components/revenue/revenue-tab'
@@ -13,11 +13,11 @@ import { EmptyState } from '@/components/shared/empty-state'
 import { useAgent } from '@/hooks/use-agents'
 import { cn } from '@/lib/utils'
 
-type Tab = 'overview' | 'try' | 'token' | 'reputation' | 'revenue'
+type Tab = 'overview' | 'chat' | 'token' | 'reputation' | 'revenue'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
-  { id: 'try', label: 'Try Agent' },
+  { id: 'chat', label: 'Chat' },
   { id: 'token', label: 'Token' },
   { id: 'reputation', label: 'Reputation' },
   { id: 'revenue', label: 'Revenue' },
@@ -85,7 +85,7 @@ export default function AgentDetailPage() {
             {/* Tab content */}
             <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
               {activeTab === 'overview' && <OverviewTab agent={agent} />}
-              {activeTab === 'try' && <TryAgentTab agent={agent} />}
+              {activeTab === 'chat' && <ChatTab agent={agent} />}
               {activeTab === 'token' && <TokenTab agent={agent} />}
               {activeTab === 'reputation' && <ReputationTab agentId={agent.agentId} />}
               {activeTab === 'revenue' && <RevenueTab agentId={agent.agentId} />}
