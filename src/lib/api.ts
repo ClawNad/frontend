@@ -6,7 +6,7 @@ import type { RevenueEvent } from '@/types/revenue'
 import type { ActivityEvent } from '@/types/activity'
 import type { PlatformStats } from '@/types/stats'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1'
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.clawnad.xyz/api/v1'
 
 async function fetchApi<T>(
   path: string,
@@ -53,6 +53,7 @@ export const api = {
       order?: string
       active?: boolean
       creator?: string
+      search?: string
     }) => fetchApi<PaginatedResponse<Agent>>('/agents', { params: params as Record<string, string | number | boolean | undefined> }),
 
     get: (agentId: string) => fetchApi<ApiResponse<AgentDetail>>(`/agents/${agentId}`),
@@ -65,6 +66,11 @@ export const api = {
       }),
 
     price: (tokenAddress: string) => fetchApi<ApiResponse<TokenPrice>>(`/tokens/${tokenAddress}/price`),
+
+    metadata: (tokenAddress: string) =>
+      fetchApi<ApiResponse<{ imageUri: string | null; description: string | null; website: string | null; twitter: string | null; isGraduated: boolean } | null>>(
+        `/tokens/${tokenAddress}/metadata`,
+      ),
   },
 
   reputation: {

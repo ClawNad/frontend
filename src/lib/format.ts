@@ -17,10 +17,11 @@ export function formatTokenAmount(wei: string): string {
 }
 
 /** Format a number compactly: 1.2K, 25K, 1.5M */
-export function formatCompact(num: number): string {
-  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`
-  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`
-  return String(num)
+export function formatCompact(num: number | string | undefined | null): string {
+  const n = Number(num) || 0
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return String(n)
 }
 
 /** Truncate an address to 0xAb12...3f4d */
@@ -41,16 +42,16 @@ export function timeAgo(timestamp: string): string {
   return `${Math.floor(diff / 86400)}d ago`
 }
 
-/** Reputation score (100-500) to stars (1.0-5.0) */
+/** Reputation score (-1000 to 1000) to stars (1.0-5.0) */
 export function scoreToStars(score: string | number): number {
   const n = Number(score)
   if (n === 0) return 0
-  return n / 100
+  return Math.max(1, Math.min(5, n / 500 + 3))
 }
 
-/** Bonding progress from on-chain (0 to 1e18) to percentage (0-100) */
+/** Bonding progress from on-chain basis points (0-10000) to percentage (0-100) */
 export function progressToPercent(progress: bigint): number {
-  return Number(progress) / 1e16
+  return Number(progress) / 100
 }
 
 /** Explorer link for address or tx */
