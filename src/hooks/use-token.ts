@@ -13,6 +13,15 @@ export function useTokenPrice(tokenAddress: string | null) {
   })
 }
 
+export function useTokenMetadata(tokenAddress: string | null) {
+  return useQuery({
+    queryKey: ['token-metadata', tokenAddress],
+    queryFn: () => api.tokens.metadata(tokenAddress!),
+    enabled: !!tokenAddress,
+    staleTime: 5 * 60 * 1000, // 5 min — metadata rarely changes
+  })
+}
+
 export function useTokenTrades(tokenAddress: string | null, params?: { limit?: number; offset?: number }) {
   return useQuery({
     queryKey: ['token-trades', tokenAddress, params],
