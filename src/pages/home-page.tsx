@@ -13,12 +13,14 @@ import { useAgents } from '@/hooks/use-agents'
 import { useActivityFeed } from '@/hooks/use-activity'
 import { formatMon, formatCompact } from '@/lib/format'
 
+const DEFAULT_STATS = { totalAgents: 0, totalTrades: 0, totalRevenue: '0', totalFeedback: 0 }
+
 export default function HomePage() {
   const { data: statsData, isLoading: statsLoading } = usePlatformStats()
   const { data: agentsData, isLoading: agentsLoading } = useAgents({ sort: 'totalRevenue', order: 'desc', limit: 8 })
   const { data: activityData, isLoading: activityLoading } = useActivityFeed(20)
 
-  const stats = statsData?.data
+  const stats = statsData?.data ?? DEFAULT_STATS
   const agents = agentsData?.data ?? []
   const activity = activityData?.data ?? []
 
@@ -57,14 +59,14 @@ export default function HomePage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {statsLoading ? (
                 Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
-              ) : stats ? (
+              ) : (
                 <>
                   <StatCard label="Active Agents" value={formatCompact(stats.totalAgents)} icon={Users} />
                   <StatCard label="Total Trades" value={formatCompact(stats.totalTrades)} icon={TrendingUp} />
                   <StatCard label="Total Revenue" value={`${formatMon(stats.totalRevenue)} MON`} icon={BarChart3} />
                   <StatCard label="Feedback" value={formatCompact(stats.totalFeedback)} icon={MessageSquare} />
                 </>
-              ) : null}
+              )}
             </div>
           </section>
 

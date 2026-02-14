@@ -1,12 +1,20 @@
-import { useState } from 'react'
-import { SlidersHorizontal } from 'lucide-react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { Loader2, SlidersHorizontal } from 'lucide-react'
 import { Navbar } from '../components/navbar'
 import { AgentCard } from '../components/agent/agent-card'
 import { FilterSidebar } from '../components/filter-sidebar'
 import { AgentCardSkeleton } from '../components/shared/loading-skeleton'
 import { EmptyState } from '../components/shared/empty-state'
-import { Button } from '../components/ui/button'
-import { useAgents } from '@/hooks/use-agents'
+import { useInfiniteAgents } from '@/hooks/use-agents'
+
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+  return debounced
+}
 
 const SORT_OPTIONS = [
   { value: 'launchedAt', label: 'Recently Launched' },
@@ -20,26 +28,49 @@ export default function AgentsPage() {
   const [order] = useState('desc')
   const [activeFilter, setActiveFilter] = useState<boolean | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
-  const [offset, setOffset] = useState(0)
   const [filterOpen, setFilterOpen] = useState(false)
-  const limit = 20
+  const debouncedSearch = useDebouncedValue(searchQuery.trim(), 300)
 
-  const { data, isLoading } = useAgents({ limit, offset, sort, order, active: activeFilter })
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteAgents({
+    limit: 20,
+    sort,
+    order,
+    active: activeFilter,
+    search: debouncedSearch || undefined,
+  })
 
-  const agents = data?.data ?? []
-  const pagination = data?.pagination
+  const allAgents = data?.pages.flatMap((p) => p.data) ?? []
+  const totalCount = data?.pages[0]?.pagination.total ?? 0
 
-  const filtered = searchQuery.trim()
-    ? agents.filter((a) => {
-        const q = searchQuery.toLowerCase()
-        return (
-          (a.tokenName?.toLowerCase().includes(q)) ||
-          (a.tokenSymbol?.toLowerCase().includes(q)) ||
-          a.agentId.includes(q) ||
-          a.creator.toLowerCase().includes(q)
-        )
-      })
-    : agents
+  // Intersection observer for infinite scroll
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const sentinelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (observerRef.current) observerRef.current.disconnect()
+      if (!node) return
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+            fetchNextPage()
+          }
+        },
+        { rootMargin: '200px' },
+      )
+      observerRef.current.observe(node)
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  )
+
+  // Cleanup observer on unmount
+  useEffect(() => {
+    return () => observerRef.current?.disconnect()
+  }, [])
 
   return (
     <>
@@ -48,20 +79,14 @@ export default function AgentsPage() {
         <div className="hidden lg:block shrink-0">
           <FilterSidebar
             selectedCategoryId={sort}
-            onCategoryChange={(id) => {
-              setSort(id)
-              setOffset(0)
-            }}
+            onCategoryChange={(id) => setSort(id)}
             onSearchChange={setSearchQuery}
             categories={SORT_OPTIONS.map((o) => ({ id: o.value, label: o.label, count: 0 }))}
             statusOptions={[
               { value: '', label: 'All' },
               { value: 'active', label: 'Active' },
             ]}
-            onStatusChange={(v) => {
-              setActiveFilter(v === 'active' ? true : undefined)
-              setOffset(0)
-            }}
+            onStatusChange={(v) => setActiveFilter(v === 'active' ? true : undefined)}
           />
         </div>
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -85,7 +110,7 @@ export default function AgentsPage() {
                     <AgentCardSkeleton key={i} />
                   ))}
                 </div>
-              ) : filtered.length === 0 ? (
+              ) : allAgents.length === 0 ? (
                 <EmptyState
                   title="No agents found"
                   description={searchQuery ? 'Try a different search term' : 'No agents have been launched yet'}
@@ -93,30 +118,24 @@ export default function AgentsPage() {
               ) : (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 w-full min-w-0">
-                    {filtered.map((agent) => (
+                    {allAgents.map((agent) => (
                       <AgentCard key={agent.agentId} agent={agent} />
                     ))}
                   </div>
 
-                  {pagination && (
-                    <div className="flex items-center justify-between mt-6 text-xs text-muted-foreground">
-                      <span>
-                        Showing {offset + 1}-{Math.min(offset + limit, pagination.total)} of {pagination.total}
-                      </span>
-                      <div className="flex gap-2">
-                        {offset > 0 && (
-                          <Button variant="outline" size="sm" onClick={() => setOffset((o) => Math.max(0, o - limit))}>
-                            Previous
-                          </Button>
-                        )}
-                        {pagination.hasMore && (
-                          <Button variant="outline" size="sm" onClick={() => setOffset((o) => o + limit)}>
-                            Load More
-                          </Button>
+                  {/* Infinite scroll sentinel + count */}
+                  <div className="mt-6 text-center">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Showing {allAgents.length} of {totalCount} agents
+                    </p>
+                    {hasNextPage && (
+                      <div ref={sentinelRef} className="flex justify-center py-4">
+                        {isFetchingNextPage && (
+                          <Loader2 className="w-5 h-5 text-primary animate-spin" />
                         )}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </>
               )}
             </div>
@@ -130,10 +149,7 @@ export default function AgentsPage() {
           <div className="fixed inset-y-0 left-0 z-[1000] w-[280px] max-w-[85vw] bg-background border-r border-border shadow-lg flex flex-col">
             <FilterSidebar
               selectedCategoryId={sort}
-              onCategoryChange={(id) => {
-                setSort(id)
-                setOffset(0)
-              }}
+              onCategoryChange={(id) => setSort(id)}
               onSearchChange={setSearchQuery}
               onClose={() => setFilterOpen(false)}
               categories={SORT_OPTIONS.map((o) => ({ id: o.value, label: o.label, count: 0 }))}
@@ -141,10 +157,7 @@ export default function AgentsPage() {
                 { value: '', label: 'All' },
                 { value: 'active', label: 'Active' },
               ]}
-              onStatusChange={(v) => {
-                setActiveFilter(v === 'active' ? true : undefined)
-                setOffset(0)
-              }}
+              onStatusChange={(v) => setActiveFilter(v === 'active' ? true : undefined)}
             />
           </div>
         </>
